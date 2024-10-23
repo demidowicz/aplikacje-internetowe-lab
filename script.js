@@ -1,187 +1,187 @@
-class Task {
-    constructor() {
-        this.tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        this.term = '';
-        this.draw();
-        document.getElementById('addTaskButton').addEventListener('click', () => this.addTask());
-        document.getElementById('searchInput').addEventListener('input', (e) => this.searchTasks(e));
+// Inicjalizacja mapy Leaflet
+const map = L.map('map').setView([53.430127, 14.564802], 18);
+L.tileLayer.provider('Esri.WorldImagery').addTo(map);
+
+// Obsługa przycisku "Moja lokalizacja"
+document.getElementById('myLocation').addEventListener('click', () => {
+    navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        L.marker([latitude, longitude]).addTo(map).bindPopup('Twoja lokalizacja').openPopup();
+        map.setView([latitude, longitude], 13);
+    }, (error) => {
+        alert('Nie można uzyskać dostępu do lokalizacji.');
+    });
+});
+
+// Obsługa przycisku "Zapisz mapę"
+document.getElementById("saveMap").addEventListener("click", function () {
+    leafletImage(map, function (err, canvas) {
+
+        const mapWidth = canvas.width;
+        const mapHeight = canvas.height;
+
+        let rasterMap = document.getElementById("rasterMap");
+        rasterMap.width = mapWidth;
+        rasterMap.height = mapHeight;
+
+        let rasterContext = rasterMap.getContext("2d");
+        rasterContext.drawImage(canvas, 0, 0, mapWidth, mapHeight);
+
+        createPuzzle();
+    });
+});
+
+// Tworzenie puzzli z zapisanej mapy
+function createPuzzle() {
+    clearPuzzle();
+    const piecesContainer = document.getElementById('puzzlePieces');
+    const puzzleContainer = document.getElementById('puzzleContainer');
+    const rasterMap = document.getElementById('rasterMap');
+    const pieces = [];
+    const dropZones = [];
+
+    const mapWidth = rasterMap.width;
+    const mapHeight = rasterMap.height;
+
+    const rows = 4;
+    const cols = 4;
+
+    const pieceWidth = mapWidth / cols;
+    const pieceHeight = mapHeight / rows;
+
+    // Generowanie 16 elementów (np. 100x100 px każdy)
+    for (let i = 0; i < rows * cols; i++) {
+        const piece = document.createElement('div');
+        piece.classList.add('puzzle-piece');
+        piece.draggable = true;
+        piece.dataset.index = i; // Oryginalna pozycja
+
+        const x = (i % cols) * pieceWidth;
+        const y = Math.floor(i / cols) * pieceHeight;
+
+        piece.style.width = `${pieceWidth}px`;
+        piece.style.height = `${pieceHeight}px`;
+
+        piece.addEventListener('dragstart', dragStart);
+        piece.addEventListener('dragover', dragOver);
+        piece.addEventListener('drop', drop);
+
+        const dropZone = document.createElement('div');
+        dropZone.classList.add('drop-zone');
+        dropZone.style.width = `${pieceWidth}px`;
+        dropZone.style.height = `${pieceHeight}px`;
+        dropZone.dataset.index = i;
+        dropZone.addEventListener('dragover', dragOver);
+        dropZone.addEventListener('drop', drop);
+
+        dropZones.push(dropZone);
+
+        piece.style.backgroundImage = `url(${rasterMap.toDataURL()})`;
+        piece.style.backgroundSize = `${mapWidth}px ${mapHeight}px`;
+        piece.style.backgroundPosition = `-${x}px -${y}px`;
+
+        pieces.push(piece);
     }
 
-    addTask() {
-        const taskInput = document.getElementById('newTaskInput');
-        const deadlineInput = document.getElementById('taskDeadline');
-        const text = taskInput.value.trim();
-        const deadline = deadlineInput.value;
-
-        if (text.length < 3 || text.length > 255) {
-            alert('Zadanie musi zawierać od 3 do 255 znaków.');
-            return;
-        }
-
-        if (deadline && new Date(deadline) < new Date()) {
-            alert('Data musi być w przyszłości.');
-            return;
-        }
-
-        this.tasks.push({ text, deadline, completed: false });
-        this.saveTasks();
-        this.draw();
-        taskInput.value = '';
-        deadlineInput.value = '';
-    }
-
-    searchTasks(event) {
-        this.term = event.target.value.trim();
-        this.draw();
-    }
-
-    get filteredTasks() {
-        if (this.term.length < 2) {
-            return this.tasks.map((task, index) => ({ ...task, originalIndex: index }));
-        }
-        return this.tasks
-            .map((task, index) => ({ ...task, originalIndex: index }))
-            .filter(task => task.text.toLowerCase().includes(this.term.toLowerCase()));
-    }
-    
-
-    toggleTaskCompletion(index) {
-        this.tasks[index].completed = !this.tasks[index].completed;
-        this.saveTasks();
-        this.draw();
-    }
-
-    editTask(index, newText, newDeadline) {
-        this.tasks[index].text = newText;
-        this.tasks[index].deadline = newDeadline;
-        this.saveTasks();
-        this.draw();
-    }
-
-    deleteTask(index) {
-        this.tasks.splice(index, 1);
-        this.saveTasks();
-        this.draw();
-    }
-
-    saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(this.tasks));
-    }
-
-    formatDateTime(dateString) {
-        if (!dateString) return "Brak terminu";
-        
-        const date = new Date(dateString);
-        
-        const dateOptions = { year: 'numeric', month: 'numeric', day: 'numeric' };
-        const timeOptions = { hour: '2-digit', minute: '2-digit' };
-        
-        const formattedDate = date.toLocaleDateString('pl-PL', dateOptions);
-        const formattedTime = date.toLocaleTimeString('pl-PL', timeOptions);
-    
-        return `${formattedDate}, ${formattedTime}`;
-    }
-
-    draw() {
-        const taskList = document.getElementById('taskList');
-        taskList.innerHTML = '';
-    
-        for (const task of this.filteredTasks) {
-            const taskElement = document.createElement('div');
-            taskElement.className = 'task';
-    
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = task.completed;
-            checkbox.addEventListener('change', () => this.toggleTaskCompletion(task.originalIndex));
-            taskElement.appendChild(checkbox);
-    
-            const taskText = document.createElement('span');
-            taskText.className = 'task-text';
-            taskText.textContent = task.text;
-    
-            if (this.term.length >= 2) {
-                const regex = new RegExp(`(${this.term})`, 'gi');
-                taskText.innerHTML = task.text.replace(regex, '<mark>$1</mark>');
-            }
-    
-            taskText.addEventListener('click', () => this.enableEditing(taskElement, task.originalIndex, task, 'taskText'));
-            taskElement.appendChild(taskText);
-    
-            const deadline = document.createElement('span');
-            deadline.className = 'task-deadline';
-            deadline.textContent = this.formatDateTime(task.deadline);
-            deadline.addEventListener('click', () => this.enableEditing(taskElement, task.originalIndex, task, 'deadline'));
-            taskElement.appendChild(deadline);
-    
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'delete-button';
-            deleteButton.textContent = '🗑️';
-            deleteButton.addEventListener('click', () => this.deleteTask(task.originalIndex));
-            taskElement.appendChild(deleteButton);
-    
-            taskList.appendChild(taskElement);
-        }
-    }
-    
-    
-    enableEditing(taskElement, originalIndex, task, trigger) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = task.text;
-    
-        const deadlineInput = document.createElement('input');
-        deadlineInput.type = 'datetime-local';
-        deadlineInput.value = task.deadline;
-    
-        taskElement.innerHTML = '';
-        taskElement.appendChild(input);
-        taskElement.appendChild(deadlineInput);
-    
-        let blurTimeout;
-    
-        const saveChanges = () => {
-            const newText = input.value.trim();
-            const newDeadline = deadlineInput.value;
-    
-            if (newText.length < 3 || newText.length > 255) {
-                alert('Zadanie musi zawierać od 3 do 255 znaków.');
-                return;
-            }
-    
-            if (newDeadline && new Date(newDeadline) < new Date()) {
-                alert('Data musi być w przyszłości.');
-                return;
-            }
-    
-            this.editTask(originalIndex, newText, newDeadline);
-        };
-    
-        const handleBlur = (event) => {
-            blurTimeout = setTimeout(() => {
-                if (!taskElement.contains(document.activeElement)) {
-                    saveChanges();
-                }
-            }, 50);
-        };
-    
-        const handleFocus = () => {
-            clearTimeout(blurTimeout);
-        };
-    
-        input.addEventListener('blur', handleBlur);
-        deadlineInput.addEventListener('blur', handleBlur);
-        input.addEventListener('focus', handleFocus);
-        deadlineInput.addEventListener('focus', handleFocus);
-    
-        if (trigger === 'taskText') {
-            input.focus();
-        } else if (trigger === 'deadline') {
-            deadlineInput.focus();
-        }
-    }
-    
-    
+    pieces.sort(() => Math.random() - 0.5).forEach(piece => piecesContainer.appendChild(piece));
+    dropZones.forEach(zone => puzzleContainer.appendChild(zone));
 }
 
-document.addEventListener('DOMContentLoaded', () => new Task());
+function clearPuzzle() {
+    document.getElementById('puzzleContainer').innerHTML = '';
+    document.getElementById('puzzlePieces').innerHTML = '';
+}
+
+let draggedOverPiece = null;
+
+function dragStart(event) {
+    event.dataTransfer.setData('text/plain', event.target.dataset.index);
+    event.dataTransfer.setData('sourceContainer', event.target.parentElement.id);
+}
+
+function dragOver(event) {
+    event.preventDefault();
+}
+
+puzzleContainer.addEventListener('dragenter', (event) => {
+    if (event.target.classList.contains('puzzle-piece')) {
+        draggedOverPiece = event.target;
+    }
+});
+
+function drop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const sourceIndex = event.dataTransfer.getData('text/plain');
+    const sourcePiece = document.querySelector(`.puzzle-piece[data-index="${sourceIndex}"]`);
+    console.log(sourcePiece.classList);
+    console.log(event.target.classList);
+
+    if (event.target.classList.contains('drop-zone')) {
+        if (!event.target.firstChild) {
+            event.target.appendChild(sourcePiece);
+        }
+    }
+    else if (event.target.classList.contains('puzzle-piece')) {
+        console.log('Zamiana miejscami');
+        const sourceParent = sourcePiece.parentElement;
+        const targetParent = event.target.parentElement;
+
+        sourceParent.appendChild(event.target);
+        targetParent.appendChild(sourcePiece);
+
+    }
+
+    checkPuzzle();
+}
+
+function checkPuzzle() {
+    const pieces = puzzleContainer.querySelectorAll('.puzzle-piece');
+    const dropZones = puzzleContainer.querySelectorAll('.drop-zone');
+    const isComplete = Array.from(dropZones).every((dropZone, index) => { return dropZone.firstChild && dropZone.firstChild.dataset.index == index; });
+
+    if (isComplete) {
+        notifyUser('Gratulacje! Ułożyłeś puzzle.');
+        console.log('Gratulacje! Ułożyłeś puzzle.');
+        pieces.forEach(piece => piece.style.border = 'none');
+    }
+    else {
+        pieces.forEach(piece => piece.style.border = '1px dashed rgb(0, 0, 0)');
+    }
+}
+
+// Funkcja wyświetlająca powiadomienie
+function notifyUser(message) {
+    if (Notification.permission === 'granted') {
+        new Notification(message);
+    } else if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                new Notification(message);
+            } else {
+                console.log("Powiadomienia zostały zablokowane.");
+            }
+        });
+    } else {
+        console.log("Powiadomienia zostały zablokowane.");
+    }
+}
+
+// Funkcja do żądania zgody na powiadomienia
+function requestNotificationPermission() {
+    if (Notification.permission === 'default') {
+        console.log("Żądanie zgody na powiadomienia.");
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                console.log("Powiadomienia zostały włączone.");
+            }
+            else {
+                console.log("Powiadomienia zostały zablokowane.");
+            }
+        });
+    }
+}
+
+// Wywołanie funkcji przy wejściu na stronę
+requestNotificationPermission();

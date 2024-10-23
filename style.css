@@ -1,140 +1,60 @@
+#wrapper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 5px 70px;
+}
+
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-image: url('https://images.unsplash.com/photo-1457369804613-52c61a468e7d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
-  background-size: cover;
-  background-position: center;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 0;
+  background-color: #787171;
 }
 
-.list-body {
-  backdrop-filter: blur(1000px);
-  padding: 20px;
-  border-radius: 25px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  width: 750px;
+
+#map, #rasterMap, #puzzleContainer, #puzzlePieces {
+  width: 600px;
+  height: 300px;
+  border: 1px solid black;
 }
 
-h1 {
-  font-size: 1.5em;
-  margin-bottom: 10px;
-  margin-top: 0;
-  text-align: center;
-}
-
-.task {
+#mapContainer {
   display: flex;
-  column-gap: 15px;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 4px 0;
-  border-bottom: 2px dashed #f9f9f9;
-  transition: background-color 0.2s;
+  justify-content: center;
 }
 
-.task:last-child {
-  border-bottom: none;
-}
-
-.task:hover {
-  background-color: #ffffff69;
-}
-
-.task-text {
-  cursor: pointer;
-  word-break: break-word;
-  flex: 1;
-}
-
-.task-deadline {
-  cursor: pointer;
-  font-size: 0.85em;
-  white-space: nowrap;
-  text-align: right;
-  width: 25%;
-}
-
-.task-inputs {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-input[type="text"],
-input[type="datetime-local"] {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  transition: border-color 0.2s;
-}
-
-input[type="text"] {
-  flex: 1;
-}
-
-input[type="datetime-local"] {
-  width: 20%;
-}
-
-
-input[type="text"]:focus,
-input[type="datetime-local"]:focus {
-  border-color: #007BFF;
-  outline: none;
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
-}
-
-input[type="checkbox"] {
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-  accent-color: #007BFF;
-}
-
-button {
-  padding: 5px;
-  background-color: #007BFF;
-  color: #fff;
+#puzzleContainer, #puzzlePieces {
+  display: grid;
+  grid-template-columns: repeat(4, 150px);
+  grid-template-rows: repeat(4, 75px);
   border: none;
-  border-radius: 6px;
+}
+
+#puzzleContainer {
+  border: 1px dashed black;
+}
+
+#puzzlePieces {
+  gap: 10px;
+}
+
+.drop-zone {
+  border: 1px dashed rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+}
+
+.drop-zone:has(.puzzle-piece) {
+  border: none;
+}
+
+.puzzle-piece {
+  width: 150px;
+  height: 75px;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
-  transition: background-color 0.2s, box-shadow 0.2s;
+  border: 1px dashed rgb(0, 0, 0);
+  box-sizing: border-box;
 }
 
-.delete-button {
-  margin-right: 2px;
-}
-
-button:hover {
-  background-color: #0056b3;
-  box-shadow: 0 3px 8px rgba(0, 86, 179, 0.3);
-}
-
-button:active {
-  background-color: #004494;
-}
-
-input[type="text"]::placeholder,
-input[type="datetime-local"]::placeholder {
-  color: #aaa;
-}
-
-#searchInput {
-  margin: 0 auto;
-  display: block;
-  margin-bottom: 15px;
-  width: 99%;
-}
-
-#searchInput::placeholder {
-  color: #aaa;
-  background-image: url('https://cdn-icons-png.flaticon.com/512/622/622669.png');
-  background-size: 15px;
-  background-repeat: no-repeat;
-  background-position: 0 50%;
-  padding-left: 20px;
-}
